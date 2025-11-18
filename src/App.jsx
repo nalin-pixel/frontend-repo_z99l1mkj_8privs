@@ -68,21 +68,23 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50" dir="rtl">
+    <div className="min-h-screen bg-neutral-950 text-white" dir="rtl">
       <Navbar onCartClick={checkout} />
       <Hero />
 
-      <section id="featured" className="max-w-6xl mx-auto px-4 mt-8">
-        <h2 className="text-2xl font-extrabold text-slate-900 mb-4">מוצרים מומלצים</h2>
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {products.slice(0,3).map(p => (
-            <ProductCard key={p.id} product={p} onAdd={addToCart} />
-          ))}
+      <section id="editorial" className="max-w-7xl mx-auto px-4 mt-8">
+        <div className="grid md:grid-cols-3 gap-4">
+          <div className="rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5 aspect-[16/9]" />
+          <div className="rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5 aspect-[16/9]" />
+          <div className="rounded-3xl overflow-hidden ring-1 ring-white/10 bg-white/5 aspect-[16/9]" />
         </div>
       </section>
 
-      <section id="catalog" className="max-w-6xl mx-auto px-4 mt-14">
-        <h2 className="text-2xl font-extrabold text-slate-900 mb-4">כל החולצות</h2>
+      <section id="drops" className="max-w-7xl mx-auto px-4 mt-10">
+        <div className="flex items-end justify-between mb-4">
+          <h2 className="text-2xl font-extrabold tracking-tight">הדרופ הנוכחי</h2>
+          <p className="text-neutral-400 text-sm">מהדורה מוגבלת • מלאי מתעדכן</p>
+        </div>
         <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
           {products.map(p => (
             <ProductCard key={p.id} product={p} onAdd={addToCart} />
@@ -91,16 +93,16 @@ function App() {
       </section>
 
       {cart.length > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-slate-200 rounded-2xl p-4 w-[90vw] max-w-2xl">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-xl ring-1 ring-white/15 rounded-2xl p-4 w-[90vw] max-w-2xl">
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-white/80">
               <span className="font-bold">{cart.length} פריטים</span>
               <span>•</span>
-              <span className="font-extrabold text-slate-900">סה"כ ₪{total}</span>
+              <span className="font-extrabold text-white">סה"כ ₪{total}</span>
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => setCart([])} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg">נקה</button>
-              <button onClick={checkout} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg">לתשלום</button>
+              <button onClick={() => setCart([])} className="px-4 py-2 bg-white/5 hover:bg-white/15 rounded-xl ring-1 ring-white/10">נקה</button>
+              <button onClick={checkout} className="px-4 py-2 bg-white text-neutral-900 rounded-xl hover:bg-neutral-200">לתשלום</button>
             </div>
           </div>
         </div>
