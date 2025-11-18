@@ -1,71 +1,112 @@
+import { useEffect, useMemo, useState } from 'react'
+import Navbar from './components/Navbar'
+import Hero from './components/Hero'
+import ProductCard from './components/ProductCard'
+import Footer from './components/Footer'
+
 function App() {
+  const [products, setProducts] = useState([])
+  const [cart, setCart] = useState([])
+  const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'
+
+  useEffect(() => {
+    fetch(`${baseUrl}/products`)
+      .then(r => r.json())
+      .then(async data => {
+        if (!Array.isArray(data)) return
+        setProducts(data)
+        if (data.length === 0) {
+          // seed demo products then reload
+          await fetch(`${baseUrl}/seed`, { method: 'POST' })
+          const res = await fetch(`${baseUrl}/products`)
+          const seeded = await res.json()
+          setProducts(seeded)
+        }
+      })
+      .catch(() => {})
+  }, [baseUrl])
+
+  const addToCart = (p) => {
+    setCart(prev => {
+      const existing = prev.find(i => i.id === p.id)
+      if (existing) {
+        return prev.map(i => i.id === p.id ? { ...i, quantity: i.quantity + 1 } : i)
+      }
+      return [...prev, { ...p, quantity: 1, size: p.sizes?.[0] || 'M', color: p.colors?.[0] || 'black' }]
+    })
+  }
+
+  const removeFromCart = (id) => setCart(prev => prev.filter(i => i.id !== id))
+
+  const total = useMemo(() => cart.reduce((s, i) => s + i.price * i.quantity, 0), [cart])
+
+  const checkout = async () => {
+    if (cart.length === 0) return
+    const order = {
+      items: cart.map(i => ({
+        product_id: i.id,
+        title: i.title,
+        price: i.price,
+        size: i.size,
+        color: i.color,
+        quantity: i.quantity,
+        image_url: i.image_url,
+      })),
+      subtotal: total,
+      shipping: 0,
+      total,
+      customer: { name: 'לקוח חוף', email: 'customer@example.com', address: 'חוף הים 1' }
+    }
+    const res = await fetch(`${baseUrl}/orders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(order) })
+    if (res.ok) {
+      setCart([])
+      alert('הזמנה התקבלה! תודה 🎉')
+    } else {
+      const err = await res.json().catch(() => ({}))
+      alert(`שגיאה בהזמנה: ${err.detail || 'נסה שוב'}`)
+    }
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      {/* Subtle pattern overlay */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(59,130,246,0.05),transparent_50%)]"></div>
+    <div className="min-h-screen bg-gradient-to-br from-sky-50 via-white to-blue-50" dir="rtl">
+      <Navbar onCartClick={checkout} />
+      <Hero />
 
-      <div className="relative min-h-screen flex items-center justify-center p-8">
-        <div className="max-w-2xl w-full">
-          {/* Header with Flames icon */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center mb-6">
-              <img
-                src="/flame-icon.svg"
-                alt="Flames"
-                className="w-24 h-24 drop-shadow-[0_0_25px_rgba(59,130,246,0.5)]"
-              />
+      <section id="featured" className="max-w-6xl mx-auto px-4 mt-8">
+        <h2 className="text-2xl font-extrabold text-slate-900 mb-4">מוצרים מומלצים</h2>
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {products.slice(0,3).map(p => (
+            <ProductCard key={p.id} product={p} onAdd={addToCart} />
+          ))}
+        </div>
+      </section>
+
+      <section id="catalog" className="max-w-6xl mx-auto px-4 mt-14">
+        <h2 className="text-2xl font-extrabold text-slate-900 mb-4">כל החולצות</h2>
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {products.map(p => (
+            <ProductCard key={p.id} product={p} onAdd={addToCart} />
+          ))}
+        </div>
+      </section>
+
+      {cart.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-white shadow-2xl border border-slate-200 rounded-2xl p-4 w-[90vw] max-w-2xl">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-slate-700">
+              <span className="font-bold">{cart.length} פריטים</span>
+              <span>•</span>
+              <span className="font-extrabold text-slate-900">סה"כ ₪{total}</span>
             </div>
-
-            <h1 className="text-5xl font-bold text-white mb-4 tracking-tight">
-              Flames Blue
-            </h1>
-
-            <p className="text-xl text-blue-200 mb-6">
-              Build applications through conversation
-            </p>
-          </div>
-
-          {/* Instructions */}
-          <div className="bg-slate-800/50 backdrop-blur-sm border border-blue-500/20 rounded-2xl p-8 shadow-xl mb-6">
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Describe your idea</h3>
-                <p className="text-blue-200/80 text-sm">Use the chat panel on the left to tell the AI what you want to build</p>
-              </div>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setCart([])} className="px-4 py-2 bg-slate-100 hover:bg-slate-200 rounded-lg">נקה</button>
+              <button onClick={checkout} className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg">לתשלום</button>
             </div>
-
-            <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Watch it build</h3>
-                <p className="text-blue-200/80 text-sm">Your app will appear in this preview as the AI generates the code</p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 w-8 h-8 bg-blue-500 text-white rounded-lg flex items-center justify-center font-bold">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold text-white mb-1">Refine and iterate</h3>
-                <p className="text-blue-200/80 text-sm">Continue the conversation to add features and make changes</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <p className="text-sm text-blue-300/60">
-              No coding required • Just describe what you want
-            </p>
           </div>
         </div>
-      </div>
+      )}
+
+      <Footer />
     </div>
   )
 }
